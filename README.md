@@ -62,15 +62,9 @@ tensorboard --logdir=runs
 
 <img src="docs/Eval accuracy.svg" alt="eval_accu" style="width: 100%; max-width: 1000px;"/>
 
-<!-- Red Circle -->
-<svg height="20" width="20" style="display: inline-block; vertical-align: middle;">
-  <circle cx="10" cy="10" r="7" fill="red" />
-</svg> ResNet18 - 65.42%
+<span style="display: inline-block; width: 15px; height: 15px; background-color: red; border-radius: 50%;"></span> ResNet18 - 65.42%
 
-<!-- Blue Circle -->
-<svg height="20" width="20" style="display: inline-block; vertical-align: middle;">
-  <circle cx="10" cy="10" r="7" fill="blue" />
-</svg> CLIP ViT-B/32 - 99.59%
+<span style="display: inline-block; width: 15px; height: 15px; background-color: blue; border-radius: 50%;"></span> CLIP ViT-B/32 - 99.59%
 
 ## Export ONNX
 
