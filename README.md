@@ -2,6 +2,9 @@
 
 Fine-tune OpenAI's CLIP model for classification tasks on a subset of the ImageNet dataset, ImageNette, and benchmark its performance against state-of-the-art (SOTA) classification models such as ResNets models.
 
+## Motivation
+
+CLIP is being used for various tasks ranging from semantic image search to zero-shot image labeling. It also plays a crucial role in the architecture of Stable Diffusion and is integral to the recently emerging field of large multimodal models (LMMs). This repo will use CLIP for classification tasks and 
 
 ## Installation 
 
@@ -54,12 +57,27 @@ python clip_finetune.py --model ViT-B/32 --dataset_path <path to your dataset>
 tensorboard --logdir=runs
 ```
 
+### Evaluation accuracy for Resnet18 and CLIP ViT-B/32 on ImageNette dataset
+(Not very fair enough to compare those two models tho)
+
+<img src="docs/Eval accuracy.svg" alt="eval_accu" style="width: 100%; max-width: 1000px;"/>
+
+<!-- Red Circle -->
+<svg height="20" width="20" style="display: inline-block; vertical-align: middle;">
+  <circle cx="10" cy="10" r="7" fill="red" />
+</svg> ResNet18 - 65.42%
+
+<!-- Blue Circle -->
+<svg height="20" width="20" style="display: inline-block; vertical-align: middle;">
+  <circle cx="10" cy="10" r="7" fill="blue" />
+</svg> CLIP ViT-B/32 - 99.59%
 
 ## Export ONNX
 
 ```bash
 python scripts/export_onnx.py --input_pytorch_model best.pt --output_onnx_model best.onnx
 ```
+This only works for models like ResNet, DenseNet models. Still working for CLIP model. 
 
 ## Quantization
 
@@ -69,8 +87,8 @@ python scripts/quantize.py --input_pytorch_model best.pt --output_quantized_mode
 
 ## References
 
-- (OpenAI CLIP)[https://github.com/openai/CLIP] 
-- (Pytorch)[https://pytorch.org/]
+- [OpenAI CLIP](https://github.com/openai/CLIP) 
+- [Pytorch](https://pytorch.org/)
 
 
 ## Citations
