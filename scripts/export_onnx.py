@@ -1,10 +1,13 @@
-import onnx
-import time
-import torch
 import argparse
+import time
+
+import onnx
 import onnxruntime as ort
+import torch
 import torch.nn.functional as F
+
 from models import ResNet18
+
 
 def run_torch_inference(model, x):
     # inference

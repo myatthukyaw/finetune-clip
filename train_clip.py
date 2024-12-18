@@ -1,21 +1,22 @@
-import argparse
 import os
-
+import clip
+import torch
+import argparse
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
 from torchvision import datasets
 from torchvision.transforms import transforms
+from torch.utils.tensorboard import SummaryWriter
 
-from models import get_model
-from tools.dataset import CustomDataset
-from tools.trainer import Trainer
 from tools.utils import get_output_dir
+from tools.dataset import ClipDataset
+from tools.clip_trainer import ClipTrainer, generate_descriptions
 
 
 def main(args):
 
-    if args.tensorboard:
-        writer = SummaryWriter(f"runs/{args.dataset}-{args.model}-baseline-exp")
+    writer = SummaryWriter(
+        f"runs/{args.dataset}-{args.model.replace('/','-')}-clip-exp"
+    )
 
     transform = transforms.Compose(
         [
@@ -25,22 +26,26 @@ def main(args):
         ]
     )
 
+    model, preprocess = clip.load(args.model, device=args.device, jit=False)
+
     if args.dataset == "cifar10":
         classes = ["airplane","automobile","bird","cat","deer","dog","frog","horse","ship","truck",]
+        descriptions = generate_descriptions(classes)
         training_set = datasets.CIFAR10(
-            root="data", train=True, download=True, transform=transform
+            root="data", train=True, download=True, transform=preprocess
         )
         val_set = datasets.CIFAR10(
-            root="data", train=False, download=False, transform=transform
+            root="data", train=False, download=False, transform=preprocess
         )
 
     elif args.dataset == "custom":
         train_image_path = os.path.join(args.dataset_path, "train")
         val_image_path = os.path.join(args.dataset_path, "val")
         classes = os.listdir(train_image_path)
+        descriptions = generate_descriptions(classes)
 
-        training_set = CustomDataset(train_image_path, classes, transform=transform)
-        val_set = CustomDataset(val_image_path, classes, transform=transform)
+        training_set = ClipDataset(train_image_path, classes, descriptions, preprocess)
+        val_set = ClipDataset(val_image_path, classes, descriptions, preprocess)
 
     train_loader = DataLoader(
         training_set, batch_size=args.batch_size, shuffle=True, num_workers=2
@@ -49,9 +54,7 @@ def main(args):
         val_set, batch_size=args.batch_size, shuffle=False, num_workers=2
     )
 
-    model = get_model(args.model, num_classes=len(classes))
-
-    trainer = Trainer(model, classes, args)
+    trainer = ClipTrainer(model, classes, descriptions, args)
 
     output_dir = get_output_dir(args)
     best_acc = 0.0
@@ -66,9 +69,9 @@ def main(args):
 
         if eval_metrics.accuracy > best_acc:
             best_acc = eval_metrics.accuracy
-            trainer.save_model(f"{output_dir}/{args.model}_best_model.pth")
+            trainer.save_model(f"{output_dir}/{args.model.replace('/','-')}_best_model.pth")
 
-    trainer.save_model(f"{output_dir}/{args.model}_last_model.pth")
+    trainer.save_model(f"{output_dir}/{args.model.replace('/','-')}_last_model.pth")
     
     if args.tensorboard:
         writer.close()
@@ -76,7 +79,8 @@ def main(args):
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, default="resnet18")
+    parser.add_argument("--model", type=str, default="ViT-B/32", 
+        choices=['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B/32', 'ViT-B/16', 'ViT-L/14', 'ViT-L/14@336px'])
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--batch_size", type=int, default=8)
@@ -95,7 +99,6 @@ def parse_arguments():
     parser.add_argument("--warmup", action="store_true")
     parser.add_argument("--gradient_clipping", action="store_true")
     parser.add_argument("--tensorboard", action="store_true")
-
     return parser.parse_args()
 
 

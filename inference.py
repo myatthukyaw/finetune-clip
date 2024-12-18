@@ -1,7 +1,8 @@
 import os
+
+import clip
 # load the model 
 import torch
-import clip
 from PIL import Image
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
