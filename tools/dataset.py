@@ -1,10 +1,10 @@
 import os
+
 import clip
 from PIL import Image
 
 
-# Define a custom dataset
-class ClipImageNetteDataset():
+class ClipDataset:
     def __init__(self, path, classes, descriptions, preprocess):
         self.path = path
         self.classes = classes
@@ -28,17 +28,23 @@ class ClipImageNetteDataset():
         return image, title, label, image_path
 
     def _load_data(self):
-
-        type_of_categories = os.listdir(self.path)
-        for category in type_of_categories:
-            images = os.listdir(self.path+ "/" + category)
+        categories = os.listdir(self.path)
+        for category in categories:
+            category_path = os.path.join(self.path, category)
+            images = os.listdir(category_path)
             for image in images:
-                if image.endswith('.jpg') or image.endswith('.png') or image.endswith('.JPEG'):
-                    self.list_image_path.append(self.path + '/' + category + '/' + image)
-                    self.list_txt.append(self.descriptions[category])                
+                if (
+                    image.endswith(".jpg")
+                    or image.endswith(".png")
+                    or image.endswith(".JPEG")
+                ):
+                    img_path = os.path.join(category_path, image)
+                    self.list_image_path.append(img_path)
+                    self.list_txt.append(self.descriptions[category])
                     self.list_labels.append(self.classes.index(category))
 
-class ImageNetteDataset():
+
+class CustomDataset:
     def __init__(self, path, classes, transform=None):
         self.path = path
         self.classes = classes
@@ -60,8 +66,14 @@ class ImageNetteDataset():
     def _load_data(self):
         categories = os.listdir(self.path)
         for category in categories:
-            images = os.listdir(self.path+ "/" + category)
+            category_path = os.path.join(self.path, category)
+            images = os.listdir(category_path)
             for image in images:
-                if image.endswith('.jpg') or image.endswith('.png') or image.endswith('.JPEG'):
-                    self.list_image_path.append(self.path + '/' + category + '/' + image)
+                if (
+                    image.endswith(".jpg")
+                    or image.endswith(".png")
+                    or image.endswith(".JPEG")
+                ):
+                    img_path = os.path.join(category_path, image)
+                    self.list_image_path.append(img_path)
                     self.list_labels.append(self.classes.index(category))

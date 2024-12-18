@@ -1,9 +1,11 @@
-import time
 import argparse
-import torch.quantization
+import time
+
 import torch.nn.functional as F
+import torch.quantization
 
 from models import ResNet18
+
 
 def run_torch_inference(model, x):
     # inference

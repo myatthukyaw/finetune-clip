@@ -1,9 +1,10 @@
-from .densenet import DenseNet121, DenseNet169, DenseNet201, DenseNet161, densenet_cifar
+from .densenet import (DenseNet121, DenseNet161, DenseNet169, DenseNet201,
+                       densenet_cifar)
 from .efficientnet import EfficientNetB0
 from .googlenet import GoogLeNet
 from .mobilenet import MobileNet
 from .mobilenetv2 import MobileNetV2
-from .resnet import ResNet18, ResNet34,ResNet50, ResNet101, ResNet152
+from .resnet import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
 from .vgg import VGG
 
 
