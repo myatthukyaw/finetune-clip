@@ -1,15 +1,16 @@
+import argparse
 import os
+
 import clip
 import torch
-import argparse
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 from torchvision import datasets
 from torchvision.transforms import transforms
-from torch.utils.tensorboard import SummaryWriter
 
-from tools.utils import get_output_dir
-from tools.dataset import ClipDataset
 from tools.clip_trainer import ClipTrainer, generate_descriptions
+from tools.dataset import ClipDataset
+from tools.utils import get_output_dir
 
 
 def main(args):

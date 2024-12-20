@@ -1,7 +1,6 @@
 import os
 
 import clip
-# load the model 
 import torch
 from PIL import Image
 

@@ -1,22 +1,26 @@
+from typing import Tuple
+
 import clip
 import torch
-from typing import Tuple
-from tqdm import tqdm
+from torch import Tensor
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from .base_trainer import BaseTrainer
 from .metrics import Metrics, OverallMetrics
 
-def generate_descriptions(classes):
+
+def generate_descriptions(classes: list) -> dict:
     descriptions = {}
     for cls in classes:
         descriptions[cls] = f"This is a photo containing a {cls}."
     return descriptions
 
+
 class ClipTrainer(BaseTrainer, Metrics):
     """Trainer class"""
 
-    def __init__(self, model, classes, descriptions, args):
+    def __init__(self, model, classes, descriptions, args) -> None:
         BaseTrainer.__init__(self, model, args)
         Metrics.__init__(self, classes)
         self.args = args
@@ -30,14 +34,14 @@ class ClipTrainer(BaseTrainer, Metrics):
         self.optimizer = self.get_optimizer()
         self.scheduler = self.get_scheduler()
 
-    def generate_text_tokens(self):
+    def generate_text_tokens(self) -> Tensor:
         text_tokens = torch.cat([clip.tokenize(c) for c in self.descriptions.values()])
         return self.move_to_device(text_tokens)
 
-    def argmax(self, iterable):
+    def argmax(self, iterable) -> int:
         return max(enumerate(iterable), key=lambda x: x[1])[0]
 
-    def forward_pass(self, images, texts):
+    def forward_pass(self, images: Tensor, texts: Tensor) -> Tuple[Tensor, Tensor]:
         return self.model(images, texts)
 
     def train(self, train_loader: DataLoader, epoch: int) -> float:

@@ -1,6 +1,8 @@
 from typing import Tuple
 
+import numpy as np
 import torch
+from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -9,8 +11,9 @@ from .metrics import Metrics, OverallMetrics
 
 
 class Trainer(BaseTrainer, Metrics):
-    """ Trainer class """
-    def __init__(self, model, classes, args):
+    """Trainer class"""
+
+    def __init__(self, model, classes, args) -> None:
         BaseTrainer.__init__(self, model, args)
         Metrics.__init__(self, classes)
         self.args = args
@@ -21,13 +24,13 @@ class Trainer(BaseTrainer, Metrics):
         self.optimizer = self.get_optimizer()
         self.scheduler = self.get_scheduler()
 
-    def _prepare_labels(self, labels, args):
-        return labels.float().unsqueeze(1) if args.loss == "BCE" else labels.long()
+    def _prepare_labels(self, labels: np.ndarray) -> None:
+        return labels.float().unsqueeze(1) if self.args.loss == "BCE" else labels.long()
 
-    def forward_pass(self, images):
+    def forward_pass(self, images: Tensor) -> Tensor:
         return self.model(images)
 
-    def train(self, train_loader : DataLoader, epoch : int) -> float:
+    def train(self, train_loader: DataLoader, epoch: int) -> float:
         self.model.train()
         total_loss = 0
 
@@ -35,7 +38,7 @@ class Trainer(BaseTrainer, Metrics):
             for images, labels in train_loader:
 
                 self.optimizer.zero_grad()
-                labels = self._prepare_labels(labels, self.args)
+                labels = self._prepare_labels(labels)
                 images = self.move_to_device(images)
                 labels = self.move_to_device(labels)
 
@@ -45,9 +48,13 @@ class Trainer(BaseTrainer, Metrics):
                 self.optimizer.step()
                 total_loss += loss.item()
                 if self.args.gradient_clipping:
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+                    torch.nn.utils.clip_grad_norm_(
+                        self.model.parameters(), max_norm=1.0
+                    )
 
-                pbar.set_description(f"Epoch {epoch}/{self.args.epochs}, Loss: {loss.item():.4f}")
+                pbar.set_description(
+                    f"Epoch {epoch}/{self.args.epochs}, Loss: {loss.item():.4f}"
+                )
                 pbar.update()
 
         if self.args.lr_scheduler:
@@ -55,7 +62,9 @@ class Trainer(BaseTrainer, Metrics):
 
         return total_loss / len(train_loader)
 
-    def eval(self, val_loader: DataLoader, epoch: int, output_dir: float)-> Tuple[OverallMetrics, float]:
+    def eval(
+        self, val_loader: DataLoader, epoch: int, output_dir: float
+    ) -> Tuple[OverallMetrics, float]:
 
         self.model.eval()
         self.init_class_metrics()
