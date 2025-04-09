@@ -3,10 +3,6 @@
 
 This repo contains a training pipeline for fine-tuning OpenAI's CLIP model using PyTorch. It supports training on CIFAR-10 and custom datasets and integrates features like TensorBoard logging, custom transformations, and flexible configurations for training parameters.
 
-## Motivation
-
-CLIP is being used for various tasks ranging from semantic image search to zero-shot image labeling. It also plays a crucial role in the architecture of Stable Diffusion and is integral to the recently emerging field of large multimodal models (LMMs). This repo fine-tunes CLIP for classification tasks and benchmarks its performance against baseline classification models.
-
 ## Features
 - **Dataset Support**: CIFAR-10 and custom datasets.
 - **Model Selection**: 
