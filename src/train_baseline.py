@@ -6,10 +6,10 @@ from torch.utils.tensorboard import SummaryWriter
 from torchvision import datasets
 from torchvision.transforms import transforms
 
-from models import get_model
-from tools.dataset import CustomDataset
-from tools.trainer import Trainer
-from tools.utils import get_output_dir
+from src.models import get_model
+from src.tools.dataset import CustomDataset
+from src.trainer.trainer import Trainer
+from src.tools.utils import get_output_dir
 
 
 def main(args):

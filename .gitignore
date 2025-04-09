@@ -1,4 +1,5 @@
 data/
 exps/
 runs/
+inference-results/
 **/__pycache__/

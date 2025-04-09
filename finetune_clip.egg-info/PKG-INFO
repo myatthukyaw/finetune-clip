@@ -1,0 +1,18 @@
+Metadata-Version: 2.1
+Name: finetune-clip
+Version: 0.1.0
+Requires-Python: >=3.8
+License-File: LICENSE
+Requires-Dist: torch>=2.0.0
+Requires-Dist: torchvision>=0.15.0
+Requires-Dist: tensorboard>=2.12.0
+Requires-Dist: setuptools>=65.5.1
+Requires-Dist: clip@ git+https://github.com/openai/CLIP.git
+Requires-Dist: numpy>=1.21.0
+Requires-Dist: Pillow>=8.0.0
+Requires-Dist: tqdm>=4.65.0
+Provides-Extra: dev
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"

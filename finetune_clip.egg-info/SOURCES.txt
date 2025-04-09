@@ -1,0 +1,8 @@
+LICENSE
+README.md
+setup.py
+finetune_clip.egg-info/PKG-INFO
+finetune_clip.egg-info/SOURCES.txt
+finetune_clip.egg-info/dependency_links.txt
+finetune_clip.egg-info/requires.txt
+finetune_clip.egg-info/top_level.txt

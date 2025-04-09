@@ -3,14 +3,32 @@ import os
 
 import clip
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from torch.utils.tensorboard import SummaryWriter
 from torchvision import datasets
 from torchvision.transforms import transforms
 
-from tools.clip_trainer import ClipTrainer, generate_descriptions
-from tools.dataset import ClipDataset
-from tools.utils import get_output_dir
+from src.trainer.clip_trainer import ClipTrainer, generate_descriptions
+from src.tools.dataset import ClipDataset
+from src.tools.utils import get_output_dir
+
+
+class CIFAR10Wrapper(Dataset):
+    def __init__(self, cifar10_dataset, classes, descriptions):
+        self.dataset = cifar10_dataset
+        self.classes = classes
+        self.descriptions = descriptions
+        self.title = clip.tokenize([self.descriptions[classes[label]] for _, label in self.dataset])
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        image, label = self.dataset[idx]
+        title = self.title[idx]
+        # Use a dummy image path for CIFAR10 as it doesn't have file paths
+        image_path = f"cifar10_{idx}"
+        return image, title, label, image_path
 
 
 def main(args):
@@ -32,12 +50,16 @@ def main(args):
     if args.dataset == "cifar10":
         classes = ["airplane","automobile","bird","cat","deer","dog","frog","horse","ship","truck",]
         descriptions = generate_descriptions(classes)
-        training_set = datasets.CIFAR10(
+        cifar10_train = datasets.CIFAR10(
             root="data", train=True, download=True, transform=preprocess
         )
-        val_set = datasets.CIFAR10(
+        cifar10_val = datasets.CIFAR10(
             root="data", train=False, download=False, transform=preprocess
         )
+        
+        # Wrap the CIFAR10 datasets to match the expected interface
+        training_set = CIFAR10Wrapper(cifar10_train, classes, descriptions)
+        val_set = CIFAR10Wrapper(cifar10_val, classes, descriptions)
 
     elif args.dataset == "custom":
         train_image_path = os.path.join(args.dataset_path, "train")

@@ -97,10 +97,20 @@ class Metrics:
     def calculate_accuracy(self) -> None:
         """Calculate total accuracy and accuracy for each class."""
         self.overall_metrics.accuracy = round(100 * self.overall_metrics.correct / self.overall_metrics.total,4)
+        
+        print("\n" + "="*70)
+        print(f"{'CLASS ACCURACY':^70}")
+        print("="*70)
+        print(f"{'Class':<20} {'Accuracy':<10} {'Correct':<10} {'Total':<10}")
+        print("-"*70)
+        
         for cls_met in self.class_metrics:
             cls_met.accuracy = round(100 * cls_met.correct / cls_met.total, 4) if cls_met.total > 0 else 0
-            print(f"Eval accuracy on {cls_met.class_name} : {cls_met.accuracy:.4f}")
-        print(f"\nTotal eval accuracy (Top-1): {self.overall_metrics.accuracy:.4f}%\n")
+            print(f"{cls_met.class_name:<20} {cls_met.accuracy:>8.2f}% {cls_met.correct:>8}/{cls_met.total:<8}")
+        
+        print("\n" + "="*70)
+        print(f"OVERALL ACCURACY: \033[1m{self.overall_metrics.accuracy:.2f}%\033[0m ({self.overall_metrics.correct}/{self.overall_metrics.total})")
+        print("="*70 + "\n")
 
     def plot_confusion_metrices(self, labels: list, preds: list, output_dir: str) -> None:
         """Plot and save confusion metrices."""
@@ -109,7 +119,7 @@ class Metrics:
 
     def _plot_cm(self, labels: list, preds: list, output_dir: str, normalized=False) -> None:
         """Plot and save confusion metrix."""
-        suffix = "_normalized" if normalized else None
+        suffix = "_normalized" if normalized else ""
         save_path = os.path.join(output_dir, f"confusion_matrix{suffix}.png")
         cm = confusion_matrix(
             labels,
@@ -124,45 +134,57 @@ class Metrics:
         plt.savefig(save_path, bbox_inches="tight")
 
     def write_to_tensorboard(self, writer, train_loss, eval_loss, epoch):
-        writer.add_scalar("Train loss", train_loss, epoch)
-        writer.add_scalar("Eval loss", eval_loss, epoch)
-        writer.add_scalar("Eval accuracy", self.metrics.accuracy, epoch)
-        writer.add_scalar("Precision Macro", self.overall_metrics.precision_macro, epoch)
-        writer.add_scalar("Precision Macro", self.overall_metrics.recall_macro, epoch)
-        writer.add_scalar("Precision Macro", self.overall_metrics.f1_macro, epoch)
-        writer.add_scalar("Precision Weighted", self.overall_metrics.precision_weighted, epoch)
-        writer.add_scalar("Precision Weighted", self.overall_metrics.recall_weighted, epoch)
-        writer.add_scalar("Precision Weighted", self.overall_metrics.f1_weighted, epoch)
+        writer.add_scalar("Loss/Train", train_loss, epoch)
+        writer.add_scalar("Loss/Validation", eval_loss, epoch)
+        writer.add_scalar("Accuracy", self.overall_metrics.accuracy, epoch)
+        writer.add_scalar("Precision/Macro", self.overall_metrics.precision_macro, epoch)
+        writer.add_scalar("Recall/Macro", self.overall_metrics.recall_macro, epoch)
+        writer.add_scalar("F1/Macro", self.overall_metrics.f1_macro, epoch)
+        writer.add_scalar("Precision/Weighted", self.overall_metrics.precision_weighted, epoch)
+        writer.add_scalar("Recall/Weighted", self.overall_metrics.recall_weighted, epoch)
+        writer.add_scalar("F1/Weighted", self.overall_metrics.f1_weighted, epoch)
 
     def _print_metrics(self) -> None:
         """Print class-wise metrics and overall metrics."""
+        print("\n" + "="*80)
+        print(f"{'DETAILED EVALUATION METRICS':^80}")
+        print("="*80)
 
-        print("\nClass-wise Metrics:")
-        print(
-            f"{'Class':<25}{'Precision':>12}{'Recall':>12}{'F1-Score':>12}{'Accuracy':>12}"
-        )
-        print("-" * 70)
+        # Class-wise metrics table
+        print("\n" + "-"*80)
+        print(f"{'CLASS-WISE METRICS':^80}")
+        print("-"*80)
+        print(f"{'Class':<25}{'Accuracy':>12}{'Precision':>12}{'Recall':>12}{'F1-Score':>12}")
+        print("-" * 80)
+        
         for metric in self.class_metrics:
             print(
                 f"{metric.class_name:<25}"
-                f"{metric.accuracy:>12.2f}{metric.precision * 100:>12.2f}"
-                f"{metric.recall * 100:>12.2f}{metric.f1 * 100:>12.2f}"
+                f"{metric.accuracy:>11.2f}%{metric.precision * 100:>11.2f}%"
+                f"{metric.recall * 100:>11.2f}%{metric.f1 * 100:>11.2f}%"
             )
 
-        print("\nOverall Metrics:")
-        print(f"{'Metric':<15}{'Macro':>12}{'Weighted':>12}")
-        print("-" * 39)
+        # Overall metrics table
+        print("\n" + "-"*80)
+        print(f"{'OVERALL METRICS':^80}")
+        print("-"*80)
+        print(f"{'Metric':<20}{'Macro':>15}{'Weighted':>15}")
+        print("-" * 50)
+        
         print(
-            f"{'Precision':<15}{self.overall_metrics.precision_macro * 100:>12.2f}"
-            f"{self.overall_metrics.precision_weighted * 100:>12.2f}"
+            f"{'Precision':<20}{self.overall_metrics.precision_macro * 100:>14.2f}%"
+            f"{self.overall_metrics.precision_weighted * 100:>14.2f}%"
         )
         print(
-            f"{'Recall':<15}{self.overall_metrics.recall_macro * 100:>12.2f}"
-            f"{self.overall_metrics.recall_weighted * 100:>12.2f}"
+            f"{'Recall':<20}{self.overall_metrics.recall_macro * 100:>14.2f}%"
+            f"{self.overall_metrics.recall_weighted * 100:>14.2f}%"
         )
         print(
-            f"{'F1-Score':<15}{self.overall_metrics.f1_macro * 100:>12.2f}"
-            f"{self.overall_metrics.f1_weighted * 100:>12.2f}"
+            f"{'F1-Score':<20}{self.overall_metrics.f1_macro * 100:>14.2f}%"
+            f"{self.overall_metrics.f1_weighted * 100:>14.2f}%"
         )
 
-        print(f"\nTotal eval accuracy (Top-1 accuracy): {self.overall_metrics.accuracy:.4f}%\n")
+        # Final accuracy
+        print("\n" + "="*80)
+        print(f"FINAL ACCURACY: \033[1m{self.overall_metrics.accuracy:.2f}%\033[0m ({self.overall_metrics.correct}/{self.overall_metrics.total})")
+        print("="*80 + "\n")

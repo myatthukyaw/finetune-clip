@@ -1,16 +1,17 @@
-# Fineune CLIP
+# Finetune CLIP
 ## Overview
 
-This repo contains training pipeline for deep learning models using PyTorch. It supports training on CIFAR-10 and custom datasets and integrates features like TensorBoard logging, custom transformations, and flexible configurations for training parameters.
-Also contain finetuning OpenAI's CLIP model for classification tasks on a subset of the ImageNet dataset, ImageNette
+This repo contains a training pipeline for fine-tuning OpenAI's CLIP model using PyTorch. It supports training on CIFAR-10 and custom datasets and integrates features like TensorBoard logging, custom transformations, and flexible configurations for training parameters.
 
 ## Motivation
 
-CLIP is being used for various tasks ranging from semantic image search to zero-shot image labeling. It also plays a crucial role in the architecture of Stable Diffusion and is integral to the recently emerging field of large multimodal models (LMMs). This repo will use CLIP for classification tasks and benchmark its performace against the baseline classification models. 
+CLIP is being used for various tasks ranging from semantic image search to zero-shot image labeling. It also plays a crucial role in the architecture of Stable Diffusion and is integral to the recently emerging field of large multimodal models (LMMs). This repo fine-tunes CLIP for classification tasks and benchmarks its performance against baseline classification models.
 
 ## Features
 - **Dataset Support**: CIFAR-10 and custom datasets.
-- **Model Selection**: Pytorch native classificaton models, Custom classification models and OpenAI's CLIP
+- **Model Selection**: 
+  - CLIP models (ViT and ResNet variants)
+  - Baseline models (ResNet, DenseNet, etc.) for comparison
 - **Training Features**:
   - Label smoothing
   - Learning rate scheduling
@@ -34,18 +35,40 @@ pip install git+https://github.com/openai/CLIP.git
 ```
 
 ## File Structure
-- **`models/`**: Contains model definitions. The `get_model` function loads the selected architecture.
-- **`scripts/`**: Includes utilities for exporting models to ONNX format and performing model quantization.
-- **`tools/`**: Contains the core functionalities for training, evaluation, and metrics.
+- **`src/train_clip.py`**: Main script for fine-tuning CLIP models.
+- **`src/train_baseline.py`**: Script for training conventional classification models.
+- **`src/inference.py`**: Script for running inference with trained models.
+- **`src/trainer/`**: Contains trainer classes for different model types:
+  - `clip_trainer.py`: CLIP-specific training implementation.
+  - `trainer.py`: Baseline trainer for standard classification models.
+  - `base.py`: Base trainer class with common functionality.
+- **`src/tools/`**: Contains utilities for datasets, metrics, and other helper functions.
+
+## Trainers
+The repo includes two main training classes:
+
+### Baseline Trainer
+The standard classification trainer (`src/trainer/trainer.py`) provides:
+- Standard image classification training pipeline
+- Single-label classification using cross-entropy or binary cross-entropy loss
+- Standard metrics evaluation and logging
+- Used with torchvision models like ResNet, DenseNet, etc.
+
+### CLIP Trainer
+The CLIP-specific trainer (`src/trainer/clip_trainer.py`) provides:
+- Image-text contrastive learning
+- Custom CIFAR10 dataset adaptation through the CIFAR10Wrapper class
+- Specialized training for dual-encoder architecture
+- Support for CLIP's specific model architecture and inference pattern
 
 ## Usage
 
-### Command-Line Arguments
-Run the script with the following arguments:
+### Command-Line Arguments for Training
+Run the training scripts with the following arguments:
 
 | Argument              | Default                     | Description                                                                 |
 |-----------------------|-----------------------------|-----------------------------------------------------------------------------|
-| `--model`             | `resnet18`                 | Model architecture to use.                                                 |
+| `--model`             | `ViT-B/32`                 | CLIP model architecture to use.                                            |
 | `--device`            | `cuda`                     | Device to use for training (`cuda` or `cpu`).                               |
 | `--epochs`            | `30`                       | Number of training epochs.                                                 |
 | `--batch_size`        | `8`                        | Batch size for training and validation.                                     |
@@ -62,31 +85,54 @@ Run the script with the following arguments:
 | `--gradient_clipping` | `False`                    | Enable gradient clipping to stabilize training.                            |
 | `--tensorboard`       | `False`                    | Log training metrics to TensorBoard.                                       |
 
+### Command-Line Arguments for Inference
+The inference script (`src/inference.py`) offers the following options:
+
+| Argument              | Default                     | Description                                                                 |
+|-----------------------|-----------------------------|-----------------------------------------------------------------------------|
+| `--model_path`        | (required)                 | Path to the fine-tuned CLIP model.                                          |
+| `--image_path`        | (required)                 | Path to a single image or directory of images for inference.                |
+| `--clip_model`        | `ViT-B/32`                 | CLIP model architecture to use.                                            |
+| `--top_k`             | `3`                        | Number of top predictions to show.                                         |
+| `--classes`           | (auto-detect)              | Classes to use for inference (if not provided, inferred from directories). |
+| `--output_dir`        | `inference-results`        | Directory to save visualization results.                                    |
+| `--batch_size`        | `8`                        | Batch size for inference with multiple images.                             |
+| `--device`            | `cuda`                     | Device to run inference on (`cuda` or `cpu`).                              |
+| `--visualization`     | `False`                    | Enable visualization of results on images.                                  |
+| `--threshold`         | `0.5`                      | Confidence threshold for predictions.                                      |
+
 ### Example Usage
-#### CIFAR-10 Dataset
+#### CIFAR-10 Dataset with CLIP
 ```bash
-python train_baseline.py --dataset cifar10 --model resnet18 --batch_size 32 --epochs 50 --tensorboard --lr_scheduler --gradient_clipping
+python -m src.train_clip --dataset cifar10 --model ViT-B/32 --batch_size 32 --epochs 20 --tensorboard --lr_scheduler
 ```
 
-#### Custom Dataset
+#### Custom Dataset with CLIP
 ```bash
-python train_baseline.py --dataset custom --dataset_path /path/to/custom/dataset --model resnet50 --tensorboard --lr_scheduler --gradient_clipping
+python -m src.train_clip --dataset custom --dataset_path /path/to/custom/dataset --model ViT-B/16 --tensorboard --lr_scheduler --gradient_clipping
 ```
 
-#### CLIP Training with Custom Dataset
-
-## Finetune clip model
-
-- Available CLIP models - **RN50, RN101, RN50x4, RN50x16, RN50x64, ViT-B/32, ViT-B/16, ViT-L/14, ViT-L/14@336px**
-
+#### Baseline Model Training
 ```bash
-python train_clip.py --dataset custom --dataset_path /path/to/custom/dataset --model ViT-B/32 --tensorboard --lr_scheduler --gradient_clipping
+python -m src.train_baseline --dataset cifar10 --model resnet18 --batch_size 32 --epochs 50 --tensorboard --lr_scheduler
 ```
 
-## Dataset Preparation
+#### Running Inference
+```bash
+# Basic usage with a single image
+python -m src.inference --model_path exps/clip-finetuned/ViT-B-32_best_model.pth --image_path path/to/image.jpg
+
+# Process a directory of images with visualization
+python -m src.inference --model_path exps/clip-finetuned/ViT-B-32_best_model.pth --image_path path/to/image_dir --visualization
+
+# Specify custom classes
+python -m src.inference --model_path exps/clip-finetuned/ViT-B-32_best_model.pth --image_path path/to/image_dir --classes dog cat bird
+```
+
+## Dataset Handling
 
 ### CIFAR-10
-The CIFAR-10 dataset is downloaded automatically if selected.
+The CIFAR-10 dataset is downloaded automatically if selected. A specialized `CIFAR10Wrapper` class adapts the dataset to the format expected by the CLIP trainer.
 
 ### Custom Dataset
 The custom dataset should be organized as follows:
@@ -108,39 +154,60 @@ The custom dataset should be organized as follows:
 
 ### Imagenette Dataset
 
-Used FastAI's Imagenette dataset for my experiments. You can check it here https://github.com/fastai/imagenette
-Prepare the dataset by renaming the directories for each classes to the class names. 
+The repo was tested with FastAI's Imagenette dataset: https://github.com/fastai/imagenette
+Prepare the dataset by organizing it as follows:
 
 ```
 _ imagenette2/
- |__ cassette player/
- |__ chain_saw/
- |__ church/
- |__ english springer/
- |__ French_horn/
- |__ garbage_truck/
- |__ gas_pump/
- |__ golf_ball/
- |__ parachute/
- |__ tench/
+ |__ train/
+     |__ cassette player/
+     |__ chain_saw/
+     |__ church/
+     |__ english springer/
+     |__ French_horn/
+     |__ garbage_truck/
+     |__ gas_pump/
+     |__ golf_ball/
+     |__ parachute/
+     |__ tench/
+ |__ val/
+     |__ cassette player/
+     |__ chain_saw/
+     |__ ...
 ```
 
-## Output
-Model checkpoints and logs are saved in the `exps/` directory. TensorBoard logs are stored under the `runs/` folder.
+## Output and Results
 
-## Export ONNX
+### Training Output
+Model checkpoints and logs are saved in the `exps/` directory. TensorBoard logs are stored under the `runs/` folder. The training process displays comprehensive metrics including:
 
-```bash
-python scripts/export_onnx.py --input_pytorch_model best.pt --output_onnx_model best.onnx
-```
-This only works for models like ResNet, DenseNet models. Still working for CLIP model. 
+- Class-wise accuracy tables
+- Detailed evaluation metrics for precision, recall, and F1-score
+- Progress bars with loss and accuracy metrics
+- Confusion matrices saved to the experiment directory
 
-## Quantization
+### Inference Output
+Inference results are displayed in a well-formatted table and optionally saved as annotated images in the `inference-results` directory. Results include:
 
-```bash
-python scripts/quantize.py --input_pytorch_model best.pt --output_quantized_model best_quantized.pt
-```
+- Predictions with confidence scores
+- Overall accuracy when ground truth is available
+- Color-coded confidence indicators
+- Batch processing for efficient evaluation of multiple images
+
+## Available Models
+
+### CLIP Models
+The following CLIP models are available for fine-tuning:
+- **ResNet variants**: RN50, RN101, RN50x4, RN50x16, RN50x64
+- **ViT variants**: ViT-B/32, ViT-B/16, ViT-L/14, ViT-L/14@336px
+
+### Baseline Models
+Standard classification models from torchvision:
+- **ResNet variants**: resnet18, resnet34, resnet50, resnet101
+- **DenseNet variants**: densenet121, densenet169, densenet201
+- **Other architectures**: mobilenet_v2, efficientnet_b0, etc.
 
 ## Acknowledgments
 - [OpenAI CLIP](https://github.com/openai/CLIP) 
 - [Pytorch](https://pytorch.org/)
+- [FastAI Imagenette](https://github.com/fastai/imagenette)
